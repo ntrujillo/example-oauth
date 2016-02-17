@@ -15,11 +15,22 @@ var cors = require('cors');
 var jwt = require('jwt-simple');
 var moment = require('moment');
 var request = require('request');
-
+var session = require('express-session');
+var oauth = require('oauth');
 var config = require('../config');
 //////////////////////////////////////////////
 
 var User = mongoose.model('User');
+
+
+
+
+router.use(session({
+  secret: "very secret",
+  resave: false,
+  saveUninitialized: true
+}));
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -35,10 +46,18 @@ router.post('/auth/connect', function(req, res) {
   var base_url = 'https://apisandbox.openbankproject.com';
   var requestTokenUrl = base_url + '/oauth/initiate';
   var accessTokenUrl = base_url + '/oauth/token';
-  var profileUrl = base_url + "/oauth/authorize?oauth_token=";
+  var consumer = new oauth.OAuth(
+    base_url + '/oauth/initiate',
+    base_url + '/oauth/token',
+    config.OPENBANK_KEY,
+    config.OPENBANK_SECRET,
+    '1.0',                             //rfc oauth 1.0, includes 1.0a
+    'http://127.0.0.1:3001/callback',
+    'HMAC-SHA1');
 
   // Part 1 of 2: Initial request from Satellizer.
   if (!req.body.oauth_token || !req.body.oauth_verifier) {
+
     var requestTokenOauth = {
       consumer_key: config.OPENBANK_KEY,
       consumer_secret: config.OPENBANK_SECRET,
@@ -48,6 +67,7 @@ router.post('/auth/connect', function(req, res) {
     // Step 1. Obtain request token for the authorization popup.
     request.post({ url: requestTokenUrl, oauth: requestTokenOauth }, function(err, response, body) {
       var oauthToken = qs.parse(body);
+      req.session.oauth_token_secret = oauthToken.oauth_token_secret;
 
       // Step 2. Send OAuth token back to open the authorization screen.
       res.send(oauthToken);
@@ -58,13 +78,19 @@ router.post('/auth/connect', function(req, res) {
       consumer_key: config.OPENBANK_KEY,
       consumer_secret: config.OPENBANK_SECRET,
       token: req.body.oauth_token,
+      token_sercret : req.session.oauth_token_secret,
       verifier: req.body.oauth_verifier
     };
+
+    console.log('accessTokenOauth',accessTokenOauth);
+
 
     // Step 3. Exchange oauth token and oauth verifier for access token.
     request.post({ url: accessTokenUrl, oauth: accessTokenOauth }, function(err, response, accessToken) {
 
-      accessToken = qs.parse(accessToken);
+      var accessToken = qs.parse(accessToken);
+
+      console.log({token :accessToken});
 
       var profileOauth = {
         consumer_key: config.OPENBANK_KEY,
@@ -72,53 +98,8 @@ router.post('/auth/connect', function(req, res) {
         oauth_token: accessToken.oauth_token
       };
 
-      // Step 4. Retrieve profile information about the current user.
-      request.get({
-        url: profileUrl + accessToken.screen_name,
-        oauth: profileOauth,
-        json: true
-      }, function(err, response, profile) {
-
-        // Step 5a. Link user accounts.
-        if (req.header('Authorization')) {
-          User.findOne({ openBank: profile.id }, function(err, existingUser) {
-            if (existingUser) {
-              return res.status(409).send({ message: 'There is already a OpenBankProject account that belongs to you' });
-            }
-
-            var token = req.header('Authorization').split(' ')[1];
-            var payload = jwt.decode(token, config.TOKEN_SECRET);
-
-            User.findById(payload.sub, function(err, user) {
-              if (!user) {
-                return res.status(400).send({ message: 'User not found' });
-              }
-
-              user.openBank = profile.id;
-              user.displayName = user.displayName || profile.name;
-              user.picture = user.picture || profile.profile_image_url.replace('_normal', '');
-              user.save(function(err) {
-                res.send({ token: createJWT(user) });
-              });
-            });
-          });
-        } else {
-          // Step 5b. Create a new user account or return an existing one.
-          User.findOne({ openBank: profile.id }, function(err, existingUser) {
-            if (existingUser) {
-              return res.send({ token: createJWT(existingUser) });
-            }
-
-            var user = new User();
-            user.openBank = profile.id;
-            user.displayName = profile.name;
-            user.picture = profile.profile_image_url.replace('_normal', '');
-            user.save(function() {
-              res.send({ token: createJWT(user) });
-            });
-          });
-        }
-      });
+      res.send({ token: accessToken });
+     
     });
   }
 });

@@ -28,9 +28,15 @@ app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($sta
 }]);
 
 
-app.controller("MainCtrl",['$scope','$auth', function($scope, $auth){
+app.controller("MainCtrl",['$scope','$auth', '$state', function($scope, $auth, $state){
 	$scope.authenticate = function () {
-		$auth.authenticate('test');
+		$auth.authenticate('test').then(function(response) {
+		    // Redirect user here after a successful log in.
+		    $state.go('welcome');
+		  }).catch(function(response) {
+		    // Handle errors here, such as displaying a notification
+		    // for invalid email and/or password.
+		  });
 	};
 
 }]);
