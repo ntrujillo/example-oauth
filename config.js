@@ -1,6 +1,6 @@
 module.exports = {
   // App Settings
-  MONGO_URI: process.env.MONGO_URI || 'localhost',
+  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost/opentest',
   TOKEN_SECRET: process.env.TOKEN_SECRET || 'YOUR_UNIQUE_JWT_TOKEN_SECRET',
 
   // OAuth 2.0
@@ -17,5 +17,7 @@ module.exports = {
 
   // OAuth 1.0
   TWITTER_KEY: process.env.TWITTER_KEY || 'YOUR_TWITTER_CONSUMER_KEY',
-  TWITTER_SECRET: process.env.TWITTER_SECRET || 'YOUR_TWITTER_CONSUMER_SECRET'
+  TWITTER_SECRET: process.env.TWITTER_SECRET || 'YOUR_TWITTER_CONSUMER_SECRET',
+  OPENBANK_KEY: process.env.OPENBANK_KEY || 'qxjpxsjj4uta1hgsfm5fmo12g3p4c4x40o5hahw5',
+  OPENBANK_SECRET: process.env.OPENBANK_SECRET || 'oo5czo5akd0q0ca5dwlzonfza2d0rhopewdep15v'
 };
