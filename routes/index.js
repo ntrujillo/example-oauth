@@ -23,13 +23,8 @@ var config = require('../config');
 var User = mongoose.model('User');
 
 
+var session = {};
 
-
-router.use(session({
-  secret: "very secret",
-  resave: false,
-  saveUninitialized: true
-}));
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -46,45 +41,52 @@ router.post('/auth/connect', function(req, res) {
   var base_url = 'https://apisandbox.openbankproject.com';
   var requestTokenUrl = base_url + '/oauth/initiate';
   var accessTokenUrl = base_url + '/oauth/token';
-  var consumer = new oauth.OAuth(
-    base_url + '/oauth/initiate',
-    base_url + '/oauth/token',
-    config.OPENBANK_KEY,
-    config.OPENBANK_SECRET,
-    '1.0',                             //rfc oauth 1.0, includes 1.0a
-    'http://127.0.0.1:3001/callback',
-    'HMAC-SHA1');
-
+ 
   // Part 1 of 2: Initial request from Satellizer.
   if (!req.body.oauth_token || !req.body.oauth_verifier) {
-
     var requestTokenOauth = {
+      callback: req.body.redirectUri,
       consumer_key: config.OPENBANK_KEY,
-      consumer_secret: config.OPENBANK_SECRET,
-      callback: req.body.redirectUri
+      consumer_secret: config.OPENBANK_SECRET
     };
 
     // Step 1. Obtain request token for the authorization popup.
     request.post({ url: requestTokenUrl, oauth: requestTokenOauth }, function(err, response, body) {
       var oauthToken = qs.parse(body);
-      req.session.oauth_token_secret = oauthToken.oauth_token_secret;
+      session.oauth_token_req = oauthToken.oauth_token;
+      session.oauth_token_secret_req = oauthToken.oauth_token_secret;
 
       // Step 2. Send OAuth token back to open the authorization screen.
       res.send(oauthToken);
     });
-  } else {
+  }else {
+      res.send({token : session.oauth_token});
+  }
+
+});
+
+
+/*
+ |--------------------------------------------------------------------------
+ | Login with Open Bank Project
+ |--------------------------------------------------------------------------
+ */
+router.get('/auth/callback', function(req, res) {
+  var base_url = 'https://apisandbox.openbankproject.com';
+  var requestTokenUrl = base_url + '/oauth/initiate';
+  var accessTokenUrl = base_url + '/oauth/token';
+ 
+ 
     // Part 2 of 2: Second request after Authorize app is clicked.
     var accessTokenOauth = {
       consumer_key: config.OPENBANK_KEY,
-      consumer_secret: config.OPENBANK_SECRET,
-      token: req.body.oauth_token,
-      token_sercret : req.session.oauth_token_secret,
-      verifier: req.body.oauth_verifier
+      consumer_secret: config.OPENBANK_SECRET,     
+      token: session.oauth_token_req,       
+      token_secret : session.oauth_token_secret_req,
+      verifier: req.query.oauth_verifier   
     };
 
-    console.log('accessTokenOauth',accessTokenOauth);
-
-
+   
     // Step 3. Exchange oauth token and oauth verifier for access token.
     request.post({ url: accessTokenUrl, oauth: accessTokenOauth }, function(err, response, accessToken) {
 
@@ -98,10 +100,17 @@ router.post('/auth/connect', function(req, res) {
         oauth_token: accessToken.oauth_token
       };
 
-      res.send({ token: accessToken });
+      if(err){
+
+      }else {
+        session.oauth_token = accessToken.oauth_token;
+        session.oauth_token_secret = accessToken.oauth_token_secret;
+        res.send(accessToken.oauth_token);
+      };
+      
      
     });
-  }
+
 });
 
 

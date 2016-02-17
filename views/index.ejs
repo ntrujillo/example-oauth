@@ -16,19 +16,58 @@
 	    <div class="row">
 	    	<div class="col-md-6 col-md-offset-3">
 	    		<h1><%= title %></h1>
-	    		<p>Welcome to <%= title %></p>   
-	    		<button ng-click="authenticate()" class="btn btn-primary">Authenticate</button>  		
+	    		<p>My App for Open Bank Project</p>  
+          <button ng-click="getAccounts()" class="btn btn-primary">Cuentas Publicas</button> 
+	    		<button ng-click="authenticate()" class="btn btn-primary">Mis Cuentas</button>  
+           		
     		</div>	    	
 	    </div>
+      <div class="row">
+        <table class="table table-bordered">
+         <thead>  
+            <tr>
+             <td> Bank </td>
+             <td> Id</td>
+             <td> Label  </td>
+          </tr>      
+         </thead>
+         <tbody>
+          <tr ng-repeat = "account in public_accounts">
+             <td> {{account.bank_id}} </td>
+             <td>  {{account.id}}</td>
+             <td> {{account.label}}   </td>
+          </tr>
+         </tbody>
+
+        </table>
+      </div>
     </script>
 
     <script type="text/ng-template" id="/welcome.html">
       <div class="row">
         <div class="col-md-6 col-md-offset-3">
           <h1><%= title %></h1>
-          <p>Welcome to My App for Open Project Bank></p>   
-          <button ng-click="getAllBanks()" class="btn btn-primary">Get All Banks</button>               
+          <p> My Accounts for Open Project Bank></p>                              
         </div>        
+      </div>
+      <div class="row">
+        <table class="table table-bordered">
+         <thead>  
+            <tr>
+             <td> Bank </td>
+             <td> Id</td>
+             <td> Label  </td>
+          </tr>      
+         </thead>
+         <tbody>
+          <tr ng-repeat = "account in my_accounts">
+             <td> {{account.bank_id}} </td>
+             <td>  {{account.id}}</td>
+             <td> {{account.label}}   </td>
+          </tr>
+         </tbody>
+
+        </table>
       </div>
     </script>
 

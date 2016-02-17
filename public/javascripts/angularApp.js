@@ -8,13 +8,13 @@ app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($sta
 	  name : "test",
 	  url: '/auth/connect',
 	  authorizationEndpoint: 'https://apisandbox.openbankproject.com/oauth/authorize',
-	  redirectUri: window.location.origin+"/welcome",	 
+	  redirectUri: window.location.origin+"/auth/callback",	 
 	  type: '1.0',
 	  popupOptions: { width: 1020, height: 618 }
 	});
 
 	$stateProvider.state('home',{
-		url:"/home",
+		url:"/login",
 		templateUrl:"/home.html",
 		controller:"MainCtrl"
 	}).state('welcome',{
@@ -28,7 +28,32 @@ app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($sta
 }]);
 
 
-app.controller("MainCtrl",['$scope','$auth', '$state', function($scope, $auth, $state){
+app.service('Service',['$q','$http',function($q, $http){
+
+	var base_url = 'https://apisandbox.openbankproject.com',
+	service = {};
+
+	
+	service.getAccounts = function(){
+			var d = $q.defer();
+            $http({
+                url: base_url+"/obp/v1.2.1/banks/rbs/accounts",
+                method: "GET",
+                data: ""
+            }).success(function (data, status, headers, config) {
+                d.resolve(data);
+            }).error(function (data, status, headers, config) {
+                d.reject(null);
+            });
+            return d.promise;
+        };
+
+	return service;
+
+}]);
+
+
+app.controller("MainCtrl",['$scope','$auth', '$state', 'Service', function($scope, $auth, $state,service){
 	$scope.authenticate = function () {
 		$auth.authenticate('test').then(function(response) {
 		    // Redirect user here after a successful log in.
@@ -39,29 +64,35 @@ app.controller("MainCtrl",['$scope','$auth', '$state', function($scope, $auth, $
 		  });
 	};
 
+	$scope.getAccounts = function(){
+		service.getAccounts().then(function(data){
+			console.log(data);
+			$scope.public_accounts = data.accounts;
+		});
+	}
+
 }]);
-	
 
 
-app.controller("WelcomeCtrl",['$scope','Service', function($scope, service){
-	$scope.getAllBanks = function () {
-		$scope.banks = service.getAllBanks();
+
+app.controller("WelcomeCtrl",['$scope','$auth','$state', 'Service', function($scope, $auth, $state, service){
+
+	$scope.logout = function () {
+			$auth.logout().then(function(){
+				$state.go('home');
+			});
 	};
 
-}]);
 
-app.service('Service',['$http',function($http){
-
-	var base_url = 'https://apisandbox.openbankproject.com',
-	service = {};
-
-	service.getAllBanks = $http.get(base_url+"/obp/v1.2.1/banks/rbs/accounts/private",function(data){
-		return data;
-	});
-
-	return service;
+	/*$scope.getAllBanks = function () {
+		service.getAllBanks().then(function(data){
+			$scope.banks = data;
+		});
+	};*/
 
 }]);
+
+
 	
 
 
