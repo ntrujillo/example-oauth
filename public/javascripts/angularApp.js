@@ -3,7 +3,6 @@ var app = angular.module("openApp",['satellizer','ui.router']);
 
 app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($stateProvider, $urlRouterProvider, $authProvider){
 
-	// GitHub
 	$authProvider.oauth1({
 	  name : "test",
 	  url: '/auth/connect',
@@ -12,9 +11,13 @@ app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($sta
 	  type: '1.0',
 	  popupOptions: { width: 1020, height: 618 }
 	});
+  
+   /*$authProvider.authHeader ({
+     Authorization : "OAuth"
+   });*/
 
 	$stateProvider.state('home',{
-		url:"/login",
+		url:"/home",
 		templateUrl:"/home.html",
 		controller:"MainCtrl"
 	}).state('welcome',{
@@ -30,14 +33,26 @@ app.config(["$stateProvider","$urlRouterProvider",'$authProvider', function($sta
 
 app.service('Service',['$q','$http',function($q, $http){
 
-	var base_url = 'https://apisandbox.openbankproject.com',
-	service = {};
+  var service = {};
 
-	
-	service.getAccounts = function(){
+  service.myAccounts = function(){
 			var d = $q.defer();
             $http({
-                url: base_url+"/obp/v1.2.1/banks/rbs/accounts",
+                url: "/private",
+                method: "GET",
+                data: ""
+            }).success(function (data, status, headers, config) {
+                d.resolve(data);
+            }).error(function (data, status, headers, config) {
+                d.reject(null);
+            });
+            return d.promise;
+        };
+	
+	service.publicAccounts = function(){
+			var d = $q.defer();
+            $http({
+                url: "/public",
                 method: "GET",
                 data: ""
             }).success(function (data, status, headers, config) {
@@ -64,8 +79,8 @@ app.controller("MainCtrl",['$scope','$auth', '$state', 'Service', function($scop
 		  });
 	};
 
-	$scope.getAccounts = function(){
-		service.getAccounts().then(function(data){
+	$scope.publicAccounts = function(){
+		service.publicAccounts().then(function(data){
 			console.log(data);
 			$scope.public_accounts = data.accounts;
 		});
@@ -77,19 +92,12 @@ app.controller("MainCtrl",['$scope','$auth', '$state', 'Service', function($scop
 
 app.controller("WelcomeCtrl",['$scope','$auth','$state', 'Service', function($scope, $auth, $state, service){
 
-	$scope.logout = function () {
-			$auth.logout().then(function(){
-				$state.go('home');
-			});
-	};
-
-
-	/*$scope.getAllBanks = function () {
-		service.getAllBanks().then(function(data){
-			$scope.banks = data;
+    $scope.myAccounts = function(){
+		service.myAccounts().then(function(data){
+			console.log(data);
+			$scope.my_accounts = data.accounts;
 		});
-	};*/
-
+	}
 }]);
 
 

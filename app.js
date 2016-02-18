@@ -4,21 +4,12 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-
-///////////////////////////////////////////////////
-var mongoose = require('mongoose');
-require('./model/User');
 var config = require('./config');
-/////////////////////////////////////////////////
+
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-mongoose.connect(config.MONGO_URI);
-mongoose.connection.on('error', function(err) {
-  console.log('Error: Could not connect to MongoDB. Did you forget to run `mongod`?'.red);
-});
 
 var app = express();
 

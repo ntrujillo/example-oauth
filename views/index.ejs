@@ -17,7 +17,7 @@
 	    	<div class="col-md-6 col-md-offset-3">
 	    		<h1><%= title %></h1>
 	    		<p>My App for Open Bank Project</p>  
-          <button ng-click="getAccounts()" class="btn btn-primary">Cuentas Publicas</button> 
+                <button ng-click="publicAccounts()" class="btn btn-primary">Cuentas Publicas</button> 
 	    		<button ng-click="authenticate()" class="btn btn-primary">Mis Cuentas</button>  
            		
     		</div>	    	
@@ -47,7 +47,8 @@
       <div class="row">
         <div class="col-md-6 col-md-offset-3">
           <h1><%= title %></h1>
-          <p> My Accounts for Open Project Bank></p>                              
+          <p> My Accounts for Open Project Bank></p>   
+           <button ng-click="myAccounts()" class="btn btn-primary">Ver Mis Cuentas</button>
         </div>        
       </div>
       <div class="row">
